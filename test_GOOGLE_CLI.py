@@ -1,5 +1,6 @@
-from google.cloud import vision
-img = "./sample.jpg"
+import os
+import KEY
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = KEY.GOOGLE_API_KEY
 
 def detect_document(path):
     from google.cloud import vision
@@ -37,5 +38,5 @@ def detect_document(path):
             '{}\nFor more info on error messages, check: '
             'https://cloud.google.com/apis/design/errors'.format(
                 response.error.message))
-        
+img ='sample.jpg'   
 detect_document(img)
