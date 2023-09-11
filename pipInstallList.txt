@@ -1,0 +1,8 @@
+PyMuPDF
+openai
+PyQt5Designer
+pyqt5
+google
+fitz
+docx2pdf
+opencv-python
