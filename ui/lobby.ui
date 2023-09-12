@@ -13,16 +13,6 @@
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
-  <widget class="QTableView" name="tableView">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>10</y>
-     <width>441</width>
-     <height>691</height>
-    </rect>
-   </property>
-  </widget>
   <widget class="QPushButton" name="btn_create_test">
    <property name="geometry">
     <rect>
@@ -71,6 +61,41 @@
    <property name="text">
     <string>Quit</string>
    </property>
+  </widget>
+  <widget class="QListWidget" name="listWidget">
+   <property name="geometry">
+    <rect>
+     <x>60</x>
+     <y>50</y>
+     <width>441</width>
+     <height>651</height>
+    </rect>
+   </property>
+   <item>
+    <property name="text">
+     <string>시험1</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>시험2</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>시험3</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>시험4</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>시험5</string>
+    </property>
+   </item>
   </widget>
  </widget>
  <resources/>
