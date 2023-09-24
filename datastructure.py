@@ -1,29 +1,53 @@
+from typing import List
+from dataclasses import dataclass, asdict, field
+from json import dumps
+
 # 문항 생성
+@dataclass
 class Question : 
-    def __init__(self, q_id=None, type=None, q_content=None, q_text=None, q_example=None, q_answer=None, keyword=None, points=None) :
-        self.q_id = q_id
-        self.type = type
-        self.q_content = q_content
-        self.q_answer = q_answer
-        self.q_text = q_text
-        self.q_example = q_example
-        self.keyword = keyword
-        self.points = points
+    src_crd : {"x0" : None, "y0" : None,"x1" : None,"y1" : None}
+    q_id : None
+    type : None
+    q_content : None
+    q_answer : None
+    q_text : None
+    q_example : None
+    q_selections : {"x0" : None, "y0" : None,"x1" : None,"y1" : None}
+    keyword : None
+    points : None
+        
+    @property
+    def __dict__(self):
+        return asdict(self)
+
+    @property
+    def json(self):
+        return dumps(self.__dict__,ensure_ascii=False)
 
 # 시험
+@dataclass
 class Test : 
     def __init__(self, t_id, t_name, questions=None) :
         self.t_id = t_id
         self.t_name = t_name
         self.questions = questions
+    @property
+    def __dict__(self):
+        return asdict(self)
+
+    @property
+    def json(self):
+        return dumps(self.__dict__)
 
 # 답안
+@dataclass
 class Answer : 
     def __init__(self, q_id, s_answer, score=0) : 
         self.q_id = q_id
         self.s_answer = s_answer
         self.score = score
 # 학생
+@dataclass
 class Student : 
     def __init__(self, s_id, s_name, answers, total_score=0) : 
         self.s_id = s_id

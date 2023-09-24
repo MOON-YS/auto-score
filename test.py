@@ -35,7 +35,7 @@ def onMouse(event, x, y, flags, param):
                 cv2.rectangle(img_draw, (x0o, y0o), (xo, yo), red, 2)
                 cv2.imshow('before', img_draw)
                 roi = src[y0:y0+h, x0:x0+w]
-                roi = cv2.resize(roi,dsize=(round(ratio*roi.shape[1]),round(ratio*roi.shape[0])),interpolation= cv2.INTER_LINEAR)
+                #roi = cv2.resize(roi,dsize=(round(ratio*roi.shape[1]),round(ratio*roi.shape[0])),interpolation= cv2.INTER_LINEAR)
                 cv2.imshow('cropped', roi)
                 cv2.moveWindow('cropped', 0, 0)
                 cv2.imwrite('./cropped.png', roi)
@@ -57,7 +57,7 @@ src2 = cv2.resize(src,dsize=(round(ratio*src.shape[1]),1500),interpolation= cv2.
 
 srcGray = cv2.cvtColor(src, cv2.COLOR_BGR2GRAY)
 no, tresh = cv2.threshold(srcGray,0,255,cv2.THRESH_BINARY_INV+cv2.THRESH_OTSU)
-
+cv2.imshow("before", tresh)
 opening_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1,1))
 opening = cv2.morphologyEx(tresh, cv2.MORPH_OPEN, opening_kernel, iterations=1)
 kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (20,20))
@@ -70,8 +70,7 @@ for c in cnts:
     area = cv2.contourArea(c)
     if area > 100:
         x,y,w,h = cv2.boundingRect(c)
-        #cv2.rectangle(src, (x, y), (x + w, y + h), (36,255,12), 3)
-        
+        cv2.rectangle(src, (x, y), (x + w, y + h), (36,255,12), 3)
 '''
 bgrLower= np.array([0,0,0]) 
 bgrUpper= np.array([255,255,165])
@@ -81,10 +80,7 @@ result = cv2.bitwise_and(src, src, mask=img_mask)
 cv2.imshow("before", src)
 srcGray = cv2.cvtColor(result, cv2.COLOR_BGR2GRAY)
 no, srcGray_n = cv2.threshold(srcGray,0,255,cv2.THRESH_OTSU)
-
-#kernel = np.ones((1, 1), np.uint8)
-#erosion_image = cv2.erode(srcGray_n, kernel, iterations=1)  #// make erosion image
-kernel = np.ones((2, 2), np.uint8)
+= np.ones((2, 2), np.uint8)
 erosion_image = cv2.dilate(srcGray_n, kernel, iterations=1)  #// make erosion image
 erosion_image = 255-erosion_image
 
@@ -95,8 +91,11 @@ erosion_image = cv2.resize(erosion_image,dsize=(0,0), fx=0.3,fy=0.3, interpolati
 
 
 dilate = cv2.resize(dilate,dsize=(round(1500/src.shape[0]*src.shape[1]),1500),interpolation= cv2.INTER_LINEAR)
-cv2.imshow("before", src2)
+#cv2.imshow("before", dilate)
 #cv2.imshow("at",src)
 cv2.setMouseCallback('before', onMouse)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
+#kernel = np.ones((1, 1), np.uint8)
+#erosion_image = cv2.erode(srcGray_n, kernel, iterations=1)  #// make erosion image
+kernel 

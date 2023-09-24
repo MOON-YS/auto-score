@@ -13,7 +13,7 @@ def detect_document(path):
     image = vision.Image(content=content)
 
     response = client.document_text_detection(image=image)
-    print(response.full_text_annotation.text)
+    #print("#OCR : \n" + response.full_text_annotation.text + "\n#end OCR")
 
     return response.full_text_annotation.text
 
