@@ -13,8 +13,8 @@ with open('./test.json', 'r',encoding='utf-8') as f:
 qFile = "./시험지/오지선다/수능 모의고사/01 성공적인 직업생활_문제지_page-0001.jpg"
 
 #testFile = "./시험지/오지선다/수능 모의고사/01 성공적인 직업생활_문제지_page-0001 답안체크 정답.jpg"
-#testFile = './시험지/오지선다/수능 모의고사/01 성공적인 직업생활_문제지_page-0001 답안체크 오답.jpg'
-testFile = './시험지/오지선다/수능 모의고사/01 성공적인 직업생활_문제지_page-0001 답안번호 정답.jpg'
+testFile = './시험지/오지선다/수능 모의고사/01 성공적인 직업생활_문제지_page-0001 답안체크 오답.jpg'
+#testFile = './시험지/오지선다/수능 모의고사/01 성공적인 직업생활_문제지_page-0001 답안번호 정답.jpg'
 #testFile = './시험지/오지선다/수능 모의고사/01 성공적인 직업생활_문제지_page-0001 답안번호 오답.jpg'
 
 img_array = np.fromfile(testFile, np.uint8)
@@ -65,14 +65,13 @@ for c in cnts:
         cv2.rectangle(s_roi2, (x, y), (x + w, y + h), (0,0,0), 2)
         checked = [x, y,x + w, y + h]
 #cv2.imshow("Checked - Find Contours", s_roi2)
-
 if checked != None:
     sel = []
 
     opening_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1,1))
     opening = cv2.morphologyEx(roi1_thresh_inv, cv2.MORPH_OPEN, opening_kernel, iterations=1)#노이즈제거
     cv2.imshow("Original - MorphologyEx", opening)
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (10,10))
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (10,3))
     dilate = cv2.dilate(opening, kernel, iterations=2)
     cv2.imshow("Original - Dilate", dilate)
 
@@ -84,10 +83,11 @@ if checked != None:
         area = cv2.contourArea(c)
         if area > 1000:
             x,y,w,h = cv2.boundingRect(c)
-            cv2.rectangle(s_roi1, (x, y), (x + w, y + h), (36,255,12), 2)
+            cv2.rectangle(s_roi1, (x, y), (x + w, y + h), (255,255,255), 2)
             sel.append([x,y,x + w, y + h])
     sel.sort(key=lambda x:x[0])
-
+    cv2.imshow("Original - s_roi1", s_roi1)
+    
     i = 0
     for box in sel :
         i = i+1
@@ -104,7 +104,6 @@ if checked != None:
                 print(f"Student Choose Correct Answer : {i}")
             else: print(f"Student Choose Wrong Answer : {i}")
         
-    cv2.imshow('Original - Select Area', s_roi1)
 
 else:
     print("Check not found")
@@ -151,7 +150,7 @@ else:
     #print(ans_num)
     if ans_num == correct_ans: print(f"Student Choose Correct Answer : {ans_num}")
     else: print(f"Student Choose Wrong Answer : {ans_num}")
-    
+
 
 cv2.waitKey()
 cv2.destroyAllWindows()
