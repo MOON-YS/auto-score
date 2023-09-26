@@ -54,6 +54,7 @@ kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (10,10))
 r1_r2 = cv2.dilate(erode, kernel, iterations=2)
 #cv2.imshow("Checked - Erode", r1_r2)
 checked = None
+checkedMidPt = None
 #find check box
 cnts = cv2.findContours(r1_r2, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 cnts = cnts[0] if len(cnts) == 2 else cnts[1]
@@ -64,7 +65,9 @@ for c in cnts:
         x,y,w,h = cv2.boundingRect(c)
         cv2.rectangle(s_roi2, (x, y), (x + w, y + h), (0,0,0), 2)
         checked = [x, y,x + w, y + h]
-#cv2.imshow("Checked - Find Contours", s_roi2)
+        checkedMidPt = (round((2*x+w)/2),y+h)
+        cv2.circle(s_roi2,checkedMidPt,10,(0,0,0),-1)
+cv2.imshow("Checked - Find Contours", s_roi2)
 if checked != None:
     sel = []
 
@@ -85,7 +88,7 @@ if checked != None:
             x,y,w,h = cv2.boundingRect(c)
             cv2.rectangle(s_roi1, (x, y), (x + w, y + h), (255,255,255), 2)
             sel.append([x,y,x + w, y + h])
-    sel.sort(key=lambda x:x[0])
+    sel.sort(key=lambda x:(x[1], x[0]))
     cv2.imshow("Original - s_roi1", s_roi1)
     
     i = 0
@@ -94,7 +97,7 @@ if checked != None:
         bin1 = np.zeros((roi1.shape[0],roi1.shape[1],3), np.uint8)
         bin2 = np.zeros((roi1.shape[0],roi1.shape[1],3), np.uint8)
         bin1 = cv2.rectangle(bin1,(box[0],box[1]),(box[2],box[3]),(255,255,255),-1)
-        bin2 = cv2.rectangle(bin2,(checked[0],checked[1]),(checked[2],checked[3]),(255,255,255),-1)
+        bin2 = cv2.circle(bin2,checkedMidPt,10,(255,255,255),-1)
         #cv2.imshow(f'box - {i}', bin1)
         result = cv2.bitwise_and(bin1,bin2)
         cv2.imshow(f'box{i}&&check box', result)
@@ -104,7 +107,6 @@ if checked != None:
                 print(f"Student Choose Correct Answer : {i}")
             else: print(f"Student Choose Wrong Answer : {i}")
         
-
 else:
     print("Check not found")
     
