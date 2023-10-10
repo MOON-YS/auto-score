@@ -125,9 +125,6 @@ def markingLoc(testImage,name=None):
     for pt in found_pt:
         cv2.rectangle(testImage,pt, (pt[0]+w, pt[1]+h), (0, 0, 255), 2)
 
-        
-
-    #cv2.imwrite(f"{name}.jpg",testImage)
     #이미지 사이즈 조정후 출력
     ratio = 700.0 / testImage.shape[1]
     dim = (700, int(testImage.shape[0] * ratio))
