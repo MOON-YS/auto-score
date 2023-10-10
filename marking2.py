@@ -62,7 +62,7 @@ def markingLoc(testImage,name=None):
     #마킹 템플릿 이미지 크기만큼 w, h 지정
     w, h = markingTemplateC1.shape[::-1]
     
-    #매치 템플릿(칠마킹2회, 체크마킹2회)
+    #매치 템플릿
     result1 = cv2.matchTemplate(testImage, markingTemplateP1, cv2.TM_CCOEFF_NORMED)
     result2 = cv2.matchTemplate(testImage, markingTemplateP2, cv2.TM_CCOEFF_NORMED)
     result3 = cv2.matchTemplate(testImage, markingTemplateP3, cv2.TM_CCOEFF_NORMED)
@@ -73,7 +73,6 @@ def markingLoc(testImage,name=None):
     result7 = cv2.matchTemplate(testImage, markingTemplateC3, cv2.TM_CCOEFF_NORMED)
     result8 = cv2.matchTemplate(testImage, markingTemplateC4, cv2.TM_CCOEFF_NORMED)
     
-
     #임계값 설정
     loc1 = np.where(result1 >= 0.8)
     loc2 = np.where(result2 >= 0.8)
