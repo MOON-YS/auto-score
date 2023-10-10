@@ -13,9 +13,9 @@ with open('./test.json', 'r',encoding='utf-8') as f:
 qFile = "./시험지/오지선다/수능 모의고사/01 성공적인 직업생활_문제지_page-0001.jpg"
 
 #testFile = "./시험지/오지선다/수능 모의고사/01 성공적인 직업생활_문제지_page-0001 답안체크 정답.jpg"
-testFile = './시험지/오지선다/수능 모의고사/01 성공적인 직업생활_문제지_page-0001 답안체크 오답.jpg'
+#testFile = './시험지/오지선다/수능 모의고사/01 성공적인 직업생활_문제지_page-0001 답안체크 오답.jpg'
 #testFile = './시험지/오지선다/수능 모의고사/01 성공적인 직업생활_문제지_page-0001 답안번호 정답.jpg'
-#testFile = './시험지/오지선다/수능 모의고사/01 성공적인 직업생활_문제지_page-0001 답안번호 오답.jpg'
+testFile = './시험지/오지선다/수능 모의고사/01 성공적인 직업생활_문제지_page-0001 답안번호 오답.jpg'
 
 img_array = np.fromfile(testFile, np.uint8)
 ans_img = cv2.imdecode(img_array,cv2.IMREAD_COLOR)
@@ -50,9 +50,9 @@ _,roi2 = cv2.threshold(roi2,0,255,cv2.THRESH_BINARY_INV+cv2.THRESH_OTSU)
 r1_r2 = cv2.bitwise_and(roi2,roi1_thresh)
 #cv2.imshow("and(Checked,Original)", r1_r2)
 erode = cv2.erode(r1_r2, np.ones((2,1)), iterations=2)
-kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (10,10))
+kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5,5))
 r1_r2 = cv2.dilate(erode, kernel, iterations=2)
-#cv2.imshow("Checked - Erode", r1_r2)
+#cv2.imshow("Checked - Erode&Dilate", r1_r2)
 checked = None
 checkedMidPt = None
 #find check box
@@ -67,16 +67,16 @@ for c in cnts:
         checked = [x, y,x + w, y + h]
         checkedMidPt = (round((2*x+w)/2),y+h)
         cv2.circle(s_roi2,checkedMidPt,10,(0,0,0),-1)
-cv2.imshow("Checked - Find Contours", s_roi2)
+#cv2.imshow("Checked - Find Contours", s_roi2)
 if checked != None:
     sel = []
 
     opening_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1,1))
     opening = cv2.morphologyEx(roi1_thresh_inv, cv2.MORPH_OPEN, opening_kernel, iterations=1)#노이즈제거
-    cv2.imshow("Original - MorphologyEx", opening)
+    #cv2.imshow("Original - MorphologyEx", opening)
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (10,3))
     dilate = cv2.dilate(opening, kernel, iterations=2)
-    cv2.imshow("Original - Dilate", dilate)
+    #cv2.imshow("Original - Dilate", dilate)
 
     #find selection box
     cnts = cv2.findContours(dilate, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -86,10 +86,10 @@ if checked != None:
         area = cv2.contourArea(c)
         if area > 1000:
             x,y,w,h = cv2.boundingRect(c)
-            cv2.rectangle(s_roi1, (x, y), (x + w, y + h), (255,255,255), 2)
+            cv2.rectangle(s_roi1, (x, y), (x + w, y + h), (0,0,0), 1)
             sel.append([x,y,x + w, y + h])
     sel.sort(key=lambda x:(x[1], x[0]))
-    cv2.imshow("Original - s_roi1", s_roi1)
+    #cv2.imshow("Original - Found select", s_roi1)
     
     i = 0
     for box in sel :
@@ -100,7 +100,7 @@ if checked != None:
         bin2 = cv2.circle(bin2,checkedMidPt,10,(255,255,255),-1)
         #cv2.imshow(f'box - {i}', bin1)
         result = cv2.bitwise_and(bin1,bin2)
-        cv2.imshow(f'box{i}&&check box', result)
+        #cv2.imshow(f'box{i}&&check box', result)
         sum_of_and = sum(sum(sum(result)))
         if sum_of_and != 0:
             if i == correct_ans:
@@ -121,18 +121,19 @@ else:
     a_roi = q_img[y0:y0 + h, x0:x0 + w].copy() 
     q_roi = ans_img[y0:y0 + h, x0:x0 + w].copy()  
     
-    cv2.imshow("Answer All", a_roi)
-    cv2.imshow("Question ALL", q_roi)
+    #cv2.imshow("Answer All", a_roi)
+    #cv2.imshow("Question ALL", q_roi)
     
     a_roi = cv2.cvtColor(a_roi, cv2.COLOR_BGR2GRAY)
     q_roi = cv2.cvtColor(q_roi, cv2.COLOR_BGR2GRAY)
     _,a_roi_thresh_inv = cv2.threshold(a_roi,0,255,cv2.THRESH_BINARY_INV+cv2.THRESH_OTSU)
     _,a_roi_thresh = cv2.threshold(a_roi,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
-    cv2.imshow("Answer All", a_roi_thresh_inv)
-    cv2.imshow("Question ALL", a_roi_thresh)
+    #cv2.imshow("Answer - Thresh Inv", a_roi_thresh_inv)
+    #cv2.imshow("Question - Thresh", a_roi_thresh)
     _,q_roi_thresh = cv2.threshold(q_roi,0,255,cv2.THRESH_BINARY_INV+cv2.THRESH_OTSU)
-    cv2.imshow("Answer Threshold", q_roi_thresh)
+    #cv2.imshow("Answer Threshold", q_roi_thresh)
     r1_r2 = cv2.bitwise_and(a_roi_thresh,q_roi_thresh)
+    #cv2.imshow("Answer Threshold & Question Thresh", r1_r2)
     opening_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2,2))
     opening = cv2.morphologyEx(r1_r2, cv2.MORPH_OPEN, opening_kernel, iterations=1)#노이즈제거
     number = None
@@ -144,10 +145,10 @@ else:
             x,y,w,h = cv2.boundingRect(c)
             #cv2.rectangle(opening, (x, y), (x + w, y + h), (255,255,255), 2)
             number = [x, y,x + w, y + h]
-    #opening = cv2.bitwise_not(opening)
+
     number_img = opening[y-10:y + h+10, x-10:x + w+10].copy()
     number_img = cv2.erode(number_img, np.ones((2,1)), iterations=2)
-    cv2.imshow("bit wise and", number_img)
+    #cv2.imshow("bit wise and", number_img)
     ans_num = digit_detect(number_img)
     #print(ans_num)
     if ans_num == correct_ans: print(f"Student Choose Correct Answer : {ans_num}")
