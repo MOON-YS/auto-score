@@ -23,7 +23,11 @@ def compare_image(image1, image2):
     sim_ration = len(matches)/((len(kp1)+len(kp2))/2)
     return sim_ration
 
-mark_template_path = 'E:\\Downlaods\\auto-score\\시험지\\SampleData\\mark_template'
+mark_template_path = './시험지/SampleData/mark_template'
+original_path = './시험지/SampleData/MCQ/T1/Original'
+answer_path = './시험지/SampleData/MCQ/T1/Answer'
+scanned_path = './시험지/SampleData/MCQ/T1/Scanned'
+
 mark_templates = []
 for f in os.listdir(mark_template_path):
     if 'jpg' in f or 'png' in f or 'bmp' in f :
@@ -114,7 +118,7 @@ def markingLoc(testImage,name=None):
     return found_pt
 
 #load test files
-original_path = 'E:\\Downlaods\\auto-score\\시험지\\SampleData\\MCQ\\T1\\Original'
+
 original_pages = []
 
 for f in os.listdir(original_path):
@@ -123,7 +127,7 @@ for f in os.listdir(original_path):
         temp = cv2.imdecode(img_array,cv2.IMREAD_GRAYSCALE)
         original_pages.append(temp)
 
-answer_path = 'E:\\Downlaods\\auto-score\\시험지\\SampleData\\MCQ\\T1\\Answer'
+
 answer_pages = []
 
 for f in os.listdir(answer_path):
@@ -132,7 +136,7 @@ for f in os.listdir(answer_path):
         temp = cv2.imdecode(img_array,cv2.IMREAD_GRAYSCALE)
         answer_pages.append(temp)
 
-scanned_path = 'E:\\Downlaods\\auto-score\\시험지\\SampleData\\MCQ\\T1\\Scanned'
+
 scanned_pages = []
 
 for f in os.listdir(scanned_path):
