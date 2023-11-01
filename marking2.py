@@ -1,6 +1,9 @@
 import cv2
 import numpy as np
 import math
+import os
+
+test_path = "시험지/SampleData/MCQ/T1"
 
 #시험지 샘플(1,2 = 칠; 3,4 = 체크)
 testAnswer1= './시험지/SelectionSamples/answer1.jpg'
@@ -16,7 +19,7 @@ markingTemplateP1 = './시험지/SelectionSamples/markingTemplateP1.png'
 markingTemplateP2 = './시험지/SelectionSamples/markingTemplateP2.png'
 markingTemplateP3 = './시험지/SelectionSamples/markingTemplateP3.png'
 markingTemplateP4 = './시험지/SelectionSamples/markingTemplateP4.png'
-
+ 
 #체크 마킹 템플릿
 markingTemplateC1 = './시험지/SelectionSamples/markingTemplateC1.png'
 markingTemplateC2 = './시험지/SelectionSamples/markingTemplateC2.png'
@@ -85,8 +88,10 @@ def markingLoc(testImage,name=None):
     
     #각 매칭된 결과들 병합
     loc = [0,0]
-    loc[0] = np.concatenate((loc1[0],loc2[0]),0)
-    loc[1] = np.concatenate((loc1[1],loc2[1]),0)
+    loc[0] = np.concatenate((loc1[0],loc1[0]),0)
+    loc[1] = np.concatenate((loc1[1],loc1[1]),0)
+    loc[0] = np.concatenate((loc[0],loc2[0]),0)
+    loc[1] = np.concatenate((loc[1],loc2[1]),0)
     loc[0] = np.concatenate((loc[0],loc3[0]),0)
     loc[1] = np.concatenate((loc[1],loc3[1]),0)
     loc[0] = np.concatenate((loc[0],loc4[0]),0)
@@ -128,7 +133,7 @@ def markingLoc(testImage,name=None):
     ratio = 700.0 / testImage.shape[1]
     dim = (700, int(testImage.shape[0] * ratio))
     testImage = cv2.resize(testImage, dsize=dim, interpolation=cv2.INTER_AREA)
-    cv2.imshow(f"{name}.jpg",testImage)
+    #cv2.imshow(f"{name}.jpg",testImage)
     
     #좌표값 정렬 x오름 이후 y오름
     found_pt.sort(key=lambda x:(x[0], x[1]))
