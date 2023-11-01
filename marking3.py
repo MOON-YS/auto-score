@@ -4,9 +4,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import random
 import math
-
-
-
+X_SIZE = 2180
 #두점 사이거리(정수반환)
 def distance(pt1,pt2):
     res = math.sqrt(math.pow(pt1[0] - pt2[0],2)+math.pow(pt1[1] - pt2[1],2))
@@ -73,7 +71,6 @@ def markingLoc(testImage,name=None):
             prev2 = pt[1]
 
     found_pt_n.sort(key=lambda x:(x[0], x[1]))
-    print(found_pt_n)
     k=0
     found_ptn2 = []
     for pt in found_pt_n:
@@ -103,13 +100,13 @@ def markingLoc(testImage,name=None):
             prev2 = pt[1]
     
     #매칭된 좌표값에 사각형 그리기 및 겹치는 좌표 제거하여 결과 저장
-    for pt in found_pt:
-        cv2.rectangle(testImage,pt, (pt[0]+w, pt[1]+h), (0, 0, 255), 2)
+    #for pt in found_pt:
+        #cv2.rectangle(testImage,pt, (pt[0]+w, pt[1]+h), (0, 0, 255), 2)
 
     #이미지 사이즈 조정후 출력
-    ratio = 700.0 / testImage.shape[1]
-    dim = (700, int(testImage.shape[0] * ratio))
-    testImage = cv2.resize(testImage, dsize=dim, interpolation=cv2.INTER_AREA)
+    #ratio = 700.0 / testImage.shape[1]
+    #dim = (700, int(testImage.shape[0] * ratio))
+    #testImage = cv2.resize(testImage, dsize=dim, interpolation=cv2.INTER_AREA)
     #cv2.imshow(f"{name}.jpg",testImage)
     
     #좌표값 정렬 x오름 이후 y오름
@@ -125,6 +122,8 @@ for f in os.listdir(original_path):
     if 'jpg' in f or 'png' in f or 'bmp' in f :
         img_array = np.fromfile(original_path+'\\'+f, np.uint8)
         temp = cv2.imdecode(img_array,cv2.IMREAD_GRAYSCALE)
+        #x=2180 으로 사이즈 조절
+        temp = cv2.resize(temp, dsize=(X_SIZE, int(temp.shape[0] * (X_SIZE/temp.shape[1]))), interpolation=cv2.INTER_AREA)
         original_pages.append(temp)
 
 
@@ -134,6 +133,8 @@ for f in os.listdir(answer_path):
     if 'jpg' in f or 'png' in f or 'bmp' in f :
         img_array = np.fromfile(answer_path+'\\'+f, np.uint8)
         temp = cv2.imdecode(img_array,cv2.IMREAD_GRAYSCALE)
+        #x=2180 으로 사이즈 조절
+        temp = cv2.resize(temp, dsize=(X_SIZE, int(temp.shape[0] * (X_SIZE/temp.shape[1]))), interpolation=cv2.INTER_AREA)
         answer_pages.append(temp)
 
 
@@ -143,6 +144,8 @@ for f in os.listdir(scanned_path):
     if 'jpg' in f or 'png' in f or 'bmp' in f :
         img_array = np.fromfile(scanned_path+'\\'+f, np.uint8)
         temp = cv2.imdecode(img_array,cv2.IMREAD_GRAYSCALE)
+        #x=2180 으로 사이즈 조절
+        temp = cv2.resize(temp, dsize=(X_SIZE, int(temp.shape[0] * (X_SIZE/temp.shape[1]))), interpolation=cv2.INTER_AREA)
         scanned_pages.append(temp)
         
 page_count = len(original_pages)
@@ -153,6 +156,7 @@ for i in range(0,len(scanned_pages)):
         sim_ratio = compare_image(original_pages[j],scanned_pages[i])
         if sim_ratio >= 0.5:
             page_label.append(j)
+            print(f"PROCESSING PAGE LABELING : {i+1} / {len(scanned_pages)} ({round(((i+1)/len(scanned_pages))*100)}%)",end="\r")
             break
 
 answer_loc = []
