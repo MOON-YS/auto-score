@@ -9,20 +9,20 @@ X_SIZE = 2180
 def distance(pt1,pt2):
     res = math.sqrt(math.pow(pt1[0] - pt2[0],2)+math.pow(pt1[1] - pt2[1],2))
     return int(round(res))
-
+#시험지 구분
 def compare_image(image1, image2):
     orb = cv2.ORB_create()
     kp1, des1 = orb.detectAndCompute(image1,None)
     kp2, des2 = orb.detectAndCompute(image2,None)
     bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
-
+    
     matches = bf.match(des1,des2)
     matches = sorted(matches, key = lambda x:x.distance)
     sim_ration = len(matches)/((len(kp1)+len(kp2))/2)
     return sim_ration
 
 mark_template_path = './시험지/SampleData/mark_template'
-original_path = './시험지/SampleData/MCQ/T1/Original'
+original_path = './시험지/SampleData/MCQ/T1/Answer'
 answer_path = './시험지/SampleData/MCQ/T1/Answer'
 scanned_path = './시험지/SampleData/MCQ/T1/Scanned'
 
@@ -31,19 +31,20 @@ for f in os.listdir(mark_template_path):
     if 'jpg' in f or 'png' in f or 'bmp' in f :
         img_array = np.fromfile(mark_template_path+'\\'+f, np.uint8)
         temp = cv2.imdecode(img_array,cv2.IMREAD_GRAYSCALE)
+        #ret, temp = cv2.threshold(temp, 245, 255, cv2.THRESH_BINARY)
+        #temp = cv2.resize(temp, dsize=(30,30), interpolation=cv2.INTER_AREA)
         mark_templates.append(temp)
         
 #마킹 위치 좌표 반환 ex)[(204, 849), (210, 1684), (1157, 1725), (1552, 1237)]
 def markingLoc(testImage,name=None):
     loc = [0,0]
+    #ret, testImage = cv2.threshold(testImage, 245, 255, cv2.THRESH_BINARY)
     counter = 0
-    for marker in mark_templates:
-        #마킹 템플릿 이미지 크기만큼 w, h 지정
-        w, h = marker.shape[::-1]
+    for mark in mark_templates:
         #매치 템플릿
-        result1 = cv2.matchTemplate(testImage, marker, cv2.TM_CCOEFF_NORMED)
+        result1 = cv2.matchTemplate(testImage, mark, cv2.TM_CCOEFF_NORMED)
         #임계값 설정
-        loc_tmp = np.where(result1 >= 0.85)
+        loc_tmp = np.where(result1 >= 0.84)
         if counter == 0:
             loc[0] = np.concatenate((loc_tmp[0],loc_tmp[0]),0)
             loc[1] = np.concatenate((loc_tmp[1],loc_tmp[1]),0)
@@ -51,68 +52,33 @@ def markingLoc(testImage,name=None):
             loc[0] = np.concatenate((loc[0],loc_tmp[0]),0)
             loc[1] = np.concatenate((loc[1],loc_tmp[1]),0)
         counter += 1
-        
-    locs = []
-    for pt in zip(*loc[::-1]):
-        locs.append(pt)
-    locs.sort(key=lambda x:(x[1], x[0]))
-    k=0
-    found_pt_n = []
-    for pt in locs:
-        if k == 0:
-            found_pt_n.append(pt)
-            prev1 = pt[0]
-            prev2 = pt[1]
-            k=1
-            continue
-        if (abs(prev1 - pt[0]) > 25) or (abs(prev2 - pt[1]) > 25):
-            found_pt_n.append(pt)
-            prev1 = pt[0]
-            prev2 = pt[1]
-
-    found_pt_n.sort(key=lambda x:(x[0], x[1]))
-    k=0
-    found_ptn2 = []
-    for pt in found_pt_n:
-        if k == 0:
-            found_ptn2.append(pt)
-            prev1 = pt[0]
-            prev2 = pt[1]
-            k=1
-            continue
-        if (abs(prev1 - pt[0]) > 25) or (abs(prev2 - pt[1]) > 25):
-            found_ptn2.append(pt)
-            prev1 = pt[0]
-            prev2 = pt[1]
-    found_pt_n.sort(key=lambda x:(x[1], x[0]))
-    k=0
-    found_pt = []
-    for pt in found_ptn2:
-        if k == 0:
-            found_pt.append(pt)
-            prev1 = pt[0]
-            prev2 = pt[1]
-            k=1
-            continue
-        if (abs(prev1 - pt[0]) > 25) or (abs(prev2 - pt[1]) > 25):
-            found_pt.append(pt)
-            prev1 = pt[0]
-            prev2 = pt[1]
     
+    #중복 좌표 제거
+    mask = np.zeros(testImage.shape[:2], np.uint8)
+    w = 50
+    h = 50
+    locs = []
+    
+    for pt in zip(*loc[::-1]):
+        if mask[pt[1] + int(round(h/2)), pt[0] + int(round(w/2))] != 255:
+            mask[pt[1]:pt[1]+h, pt[0]:pt[0]+w] = 255
+            locs.append(pt)
+
     #매칭된 좌표값에 사각형 그리기 및 겹치는 좌표 제거하여 결과 저장
-    #for pt in found_pt:
-        #cv2.rectangle(testImage,pt, (pt[0]+w, pt[1]+h), (0, 0, 255), 2)
+    locs.sort(key=lambda x:(x[1], x[0]))
+    
+    for pt in locs:
+        cv2.rectangle(testImage,pt, (pt[0]+w, pt[1]+h), (0, 0, 0), 2)
 
     #이미지 사이즈 조정후 출력
-    #ratio = 700.0 / testImage.shape[1]
-    #dim = (700, int(testImage.shape[0] * ratio))
-    #testImage = cv2.resize(testImage, dsize=dim, interpolation=cv2.INTER_AREA)
-    #cv2.imshow(f"{name}.jpg",testImage)
+    ratio = 1000.0 / testImage.shape[1]
+    dim = (1000, int(testImage.shape[0] * ratio))
+    testImage = cv2.resize(testImage, dsize=dim, interpolation=cv2.INTER_AREA)
+    cv2.imwrite(f"./result/{name}.jpg",testImage)
     
     #좌표값 정렬 x오름 이후 y오름
-    found_pt.sort(key=lambda x:(x[1], x[0]))
     
-    return found_pt
+    return locs
 
 #load test files
 
@@ -151,10 +117,13 @@ for f in os.listdir(scanned_path):
 page_count = len(original_pages)
 page_label = []
 
+random.shuffle(scanned_pages)
+
 for i in range(0,len(scanned_pages)):
     for j in range(0,page_count):
         sim_ratio = compare_image(original_pages[j],scanned_pages[i])
-        if sim_ratio >= 0.5:
+        print(sim_ratio)
+        if sim_ratio >= 0.4:
             page_label.append(j)
             print(f"PROCESSING PAGE LABELING : {i+1} / {len(scanned_pages)} ({round(((i+1)/len(scanned_pages))*100)}%)",end="\r")
             break
@@ -170,10 +139,11 @@ for num in answer_loc:
     qus_num.append(len(num))
     
 #채점
+print("starting")
 scn_num = 0
 for scn,page in zip(scanned_pages,page_label):
-    scn_mark_loc = markingLoc(scn)
     scn_num+=1
+    scn_mark_loc = markingLoc(scn,f"__{scn_num}={page+1}")
     print(scn_mark_loc)
     #정답마킹 좌표와 답안마킹 좌표 거리계산, 15미만일시 정답 취급
     if len(answer_loc[page]) == len(scn_mark_loc):

@@ -20,8 +20,9 @@ def image_converter(path):
     #pdf to img
     doc = fitz.open(path)
     for i, page in enumerate(doc):
-        img = page.get_pixmap()
+        img = page.get_pixmap(dpi=300)
         img.save(f"./converter_sample/converted_{i}.png") #변환된 파일 저장경로
+        print(f"{i}")
 
-PDF_FILE_PATH = "./converter_sample/word_sample.docx"
+PDF_FILE_PATH = "E:\\Downlaods\\TEST\\Untitled_20231107_112655.pdf"
 image_converter(PDF_FILE_PATH)
