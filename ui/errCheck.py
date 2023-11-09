@@ -82,7 +82,7 @@ class Window(QtWidgets.QWidget):
     def __init__(self):
         super(Window, self).__init__()
         self.setWindowTitle("AutoScore")
-        self.ui = uic.loadUi("imageShow.ui",self)
+        self.ui = uic.loadUi("./ui/imageShow.ui",self)
         self.viewer = PhotoViewer(self)
         self.files = []
         self.nowPage = 0
@@ -107,11 +107,11 @@ class Window(QtWidgets.QWidget):
         self.loadImage()
 
     def loadImage(self):
-        fileList = os.listdir("./Err")
+        fileList = os.listdir("./ui/Err")
         self.fileCount = len(fileList)
         self.files = fileList
         self.Page.setText(f"1 / {self.fileCount}")
-        self.viewer.setPhoto(QtGui.QPixmap("./Err/"+self.files[self.nowPage]),self.files[self.nowPage])
+        self.viewer.setPhoto(QtGui.QPixmap("./ui/Err/"+self.files[self.nowPage]),self.files[self.nowPage])
 
     def pixInfo(self):
         if not self.toggled:
@@ -131,7 +131,7 @@ class Window(QtWidgets.QWidget):
             self.btnPixInfo.setStyleSheet("color: rgb(212, 212, 202);background-color: rgb(30, 30, 30);border: 2px solid rgb(212, 212, 202);")
             self.nowPage +=1
             self.Page.setText(f"{self.nowPage+1} / {self.fileCount}")
-            self.viewer.setPhoto(QtGui.QPixmap("./Err/"+self.files[self.nowPage]),self.files[self.nowPage])
+            self.viewer.setPhoto(QtGui.QPixmap("./ui/Err/"+self.files[self.nowPage]),self.files[self.nowPage])
             
     def previousImage(self):
         if self.nowPage > 0:
@@ -139,7 +139,7 @@ class Window(QtWidgets.QWidget):
             self.btnPixInfo.setStyleSheet("color: rgb(212, 212, 202);background-color: rgb(30, 30, 30);border: 2px solid rgb(212, 212, 202);")
             self.nowPage -=1
             self.Page.setText(f"{self.nowPage+1} / {self.fileCount}")
-            self.viewer.setPhoto(QtGui.QPixmap("./Err/"+self.files[self.nowPage]),self.files[self.nowPage])
+            self.viewer.setPhoto(QtGui.QPixmap("./ui/Err/"+self.files[self.nowPage]),self.files[self.nowPage])
     
     def addPtToList(self):
         text = str(self.viewer._nowFile) + " : " + str(self.editPixInfo.text())

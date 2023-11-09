@@ -9,13 +9,13 @@ from pathlib import Path
 
 from AutoScoreTools import loadFiles,markingLoc,distance,compare_image
 
-Ui_Form = uic.loadUiType("intro.ui")[0]
+Ui_Form = uic.loadUiType("./ui/intro.ui")[0]
 answerDir = ""
 scannedDir = ""
 class AutoScoring(QDialog):
     def __init__(self):
         super().__init__()
-        self.ui = uic.loadUi("autoScore.ui",self)
+        self.ui = uic.loadUi("./ui/autoScore.ui",self)
         self.setFixedSize(QSize(535, 305))
         self.setWindowTitle("AutoScore")
         self.show()
@@ -60,7 +60,7 @@ class AutoScoring(QDialog):
         self.labelProgress.setText("채점중 (3/3)")
         self.progressBar.reset()
         self.progressBar.setRange(0,len(scanned_pages))
-        Path('Err').mkdir(parents=True, exist_ok=True)
+        Path('./ui/Err').mkdir(parents=True, exist_ok=True)
         scn_num = 0
         for scn,page in zip(scanned_pages,page_label):
             studentName = "Unknown"
