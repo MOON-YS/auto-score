@@ -63,7 +63,6 @@ def markingLoc(testImage,name=None):
     w = 50
     h = 50
     locs = []
-    
     for pt in zip(*loc[::-1]):
         if mask[pt[1] + int(round(h/2)), pt[0] + int(round(w/2))] != 255:
             mask[pt[1]:pt[1]+h, pt[0]:pt[0]+w] = 255
