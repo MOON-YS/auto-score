@@ -153,18 +153,22 @@ for num in answer_loc:
 print("starting")
 scn_num = 0
 for scn,page in zip(scanned_pages,page_label):
+    studentName = "Unknown"
+    studentSerial = "Unknown"
+    point = 0
     scn_num+=1
     scn_mark_loc = markingLoc(scn,f"__{scn_num}={page+1}")
     print(scn_mark_loc)
     #정답마킹 좌표와 답안마킹 좌표 거리계산, 15미만일시 정답 취급
+    print(f"File #{scn_num} \nStudent Info : \n\tName : {studentName} \n\tSerial : {studentSerial} \n\tPage : {page+1}")
     if len(answer_loc[page]) == len(scn_mark_loc):
         i=1
         for num in range(0,page):
             i += qus_num[num]
         print(f"File #{scn_num}={page+1}p")
         for a,b in zip(answer_loc[page],scn_mark_loc):
-            if distance(a, b) < 15: print(f"{i}번: 정답")
-            else : print(f"{i}번: 오답")
+            if distance(a, b) < 15: print(f"{i}번: 정답 [{point+5}]")
+            else : print(f"{i}번: 오답 [{point}]")
             i += 1
     else: print(f"ERR: File #{scn_num}={page+1}p 마킹갯수가 맞지 않습니다 {len(scn_mark_loc)} of {len(answer_loc[page])}")
     print("=======================")
