@@ -75,12 +75,18 @@ Number_png = scanned_png[Number_y1:Number_y2, Number_x1:Number_x2]
 ret, Number_png = cv2.threshold(Number_png, 127, 255, cv2.THRESH_BINARY_INV)
 cv2.imshow('Number_png', Number_png)
 
+test_png = scanned_png[y1:Number_y2, x1:Number_x2]
+ret, test_png = cv2.threshold(test_png, 127, 255, cv2.THRESH_BINARY_INV)
+cv2.imshow('test_png', test_png)
+
 
 # api로 보낼 이미지 리스트
 cropped_images = []
 
-cropped_images.append(Name_png)
-cropped_images.append(Number_png)
+# cropped_images.append(Name_png)
+# cropped_images.append(Number_png)
+
+cropped_images.append(test_png)
 
 ii = 0
 
@@ -93,8 +99,21 @@ for cropped_image in cropped_images :
 
     # Vision API에 이미지 전송하여 텍스트 추출
     image = vision.Image(content=image_content)
-    response = client.document_text_detection(image=image, image_context={"language_hints": ["kr"]})
+    response = client.document_text_detection(image=image, image_context={"language_hints": ["ko"]})
     print(response.full_text_annotation.text)
+
+    for page in response.full_text_annotation.pages:
+        for block in page.blocks:
+            for paragraph in block.paragraphs:
+                for word in paragraph.words:
+                    word_text = ''.join([
+                        symbol.text for symbol in word.symbols
+                    ])
+                    print('단어: {} (신뢰도: {})'.format(word_text, word.confidence))
+
+                    for symbol in word.symbols:
+                        if(symbol.confidence < 0.8):
+                            print('\t{} (신뢰도: {})'.format(symbol.text, symbol.confidence))
 
 
 cv2.waitKey(0)
