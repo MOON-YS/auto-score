@@ -1,3 +1,0 @@
-#open api key
-KEY.py
-inbound-bee-234915-0490831a85a5.json
