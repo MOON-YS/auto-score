@@ -1,6 +1,6 @@
 import typing
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
-from PyQt5.QtWidgets import QWidget,QDialog
+from PyQt5.QtWidgets import QWidget,QDialog, QTableWidget , QTableWidgetItem,  QFileDialog
 from PyQt5.QtCore import QSize,QCoreApplication,QEventLoop, Qt
 import cv2
 import sys
@@ -198,12 +198,17 @@ class Intro(QtWidgets.QMainWindow, Ui_Form):
         self.setupUi(self)
         self.setFixedSize(QSize(625, 470))
         self.initUi()
+
+        df = pd.read_csv("./pathList.csv", index_col = 0)
+        self.create_table_widget(self.pathSaveList, df)
     
     def initUi(self):
         self.setWindowTitle("AutoScore")
         self.openAnswer.clicked.connect(self.openAns)
         self.openScanned.clicked.connect(self.openScn)
         self.introNextBtn.clicked.connect(self.introNext)
+        self.saveBtn.clicked.connect(self.savePath)
+        self.loadBtn.clicked.connect(self.loadPath)
     
     def openAns(self):
         global answerDir
@@ -238,6 +243,49 @@ class Intro(QtWidgets.QMainWindow, Ui_Form):
             Window2 = AutoScoring()
             self.hide()
             Window2.runAutoScore()
+    
+    def savePath(self):
+        name = self.saveText.text()
+        if not name or not answerDir or not scannedDir:
+            return  # 이름, answerDir, scannedDir 중 하나라도 없으면 아무것도 하지 않음
+
+        existing_df = pd.read_csv("./pathList.csv")
+        new_data = {'Name': name, 'AnswerDir': answerDir, 'ScannedDir': scannedDir}
+        existing_df = existing_df.append(new_data, ignore_index=True)
+        existing_df = existing_df[['Name', 'AnswerDir', 'ScannedDir']]
+        existing_df.to_csv("./pathList.csv", index=False)
+        self.pathSaveList.setRowCount(0)
+        updated_df = pd.read_csv("./pathList.csv", index_col = 0)
+        self.create_table_widget(self.pathSaveList, updated_df)
+
+    def loadPath(self):
+        global scannedDir, answerDir
+        selected_row = self.pathSaveList.currentRow()
+        answerDir = (self.pathSaveList.item(selected_row, 0).text())
+        scannedDir = (self.pathSaveList.item(selected_row, 1).text())
+        self.folderDirAnswer.setText(answerDir)
+        fileList = os.listdir(answerDir)
+        fileCount = len(fileList)
+        self.countAnswerPage.setText(str(fileCount) + "개의 파일을 찾았습니다.")
+        self.folderDirScanned.setText(scannedDir)
+        fileList = os.listdir(scannedDir)
+        fileCount = len(fileList)
+        self.countScannedPage.setText(str(fileCount) + "개의 파일을 찾았습니다.")
+        
+    def create_table_widget(self, widget, df):
+        widget.setRowCount(len(df.index))
+        widget.setColumnCount(len(df.columns))
+        widget.setHorizontalHeaderLabels(df.columns)
+
+        df.index = df.index.astype(str)
+
+        widget.setVerticalHeaderLabels(df.index)
+
+        for row_index, row in enumerate(df.index):
+            for col_index, column in enumerate(df.columns):
+                value = df.loc[row][column]
+                item = QTableWidgetItem(str(value))
+                widget.setItem(row_index, col_index, item)
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
