@@ -86,7 +86,7 @@ def markingLoc(testImage,name=None):
 
     # 좌표를 저장할 리스트
     detected_objects = []
-    confidence_threshold = 0.5
+    confidence_threshold = 0.65
     for detection in results.xyxy[0]:
     # 객체의 confidence가 threshold 이상인 경우에만 처리합니다.
         if detection[4].item() >= confidence_threshold:
@@ -206,5 +206,5 @@ def output(df) :
     output_df.columns = ['학번', '이름', '총점']
     print(output_df)
     return output_df, output_df['총점'].min(), output_df['총점'].max(), round(output_df['총점'].std(), 4)
-    
+
 cv2.waitKey(0)
