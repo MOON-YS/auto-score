@@ -1,13 +1,13 @@
-import typing
+import shutil
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
-from PyQt5.QtWidgets import QWidget,QDialog
+from PyQt5.QtWidgets import QWidget,QDialog, QTableWidget , QTableWidgetItem,  QFileDialog
 from PyQt5.QtCore import QSize,QCoreApplication,QEventLoop, Qt
 import cv2
 import sys
 import os
 from pathlib import Path
 import pandas as pd
-from AutoScoreTools import loadFiles,markingLoc,distance,compare_image
+from AutoScoreTools import loadFiles,markingLoc,distance,compare_image,get_id_name,output
 from questionCheck import QcWindow
 from errCheck import EcWindow
 import numpy as np
@@ -55,9 +55,10 @@ class AutoScoring(QDialog):
         counter = 0
         qCounter = 1
         answerData = pd.DataFrame(columns=['페이지','번호','정답좌표'])
+        if os.path.exists('./AnswerPage') == True : shutil.rmtree('./AnswerPage')
         Path('AnswerPage').mkdir(parents=True, exist_ok=True)
         for image in answer_pages:
-            answer_loc.append(markingLoc(image,mark_templates,str(counter)))
+            answer_loc.append(markingLoc(image,str(counter)))
             self.txtBrowser.append(f"{counter+1} Page Has {len(answer_loc[counter])} Questions")
             tmp = image.copy()
             tmp = cv2.cvtColor(tmp,cv2.COLOR_GRAY2BGR)
@@ -90,26 +91,36 @@ class AutoScoring(QDialog):
         self.labelProgress.setText("채점중 (3/3)")
         self.progressBar.reset()
         self.progressBar.setRange(0,len(scanned_pages))
+        if os.path.exists('./Err') == True : shutil.rmtree('./Err')
         Path('Err').mkdir(parents=True, exist_ok=True)
         scn_num = 0
         err_cnt = 0
         errData = pd.DataFrame(columns=['파일번호','페이지','문제번호','답안좌표'])
         errFnM = pd.DataFrame(columns=['파일번호','이름','학번'])
+        columns = ['Name', 'Serial', 'Page', 'Question_Num', 'isCorrect', 'Point']
+        df = pd.DataFrame([], columns=columns)
         for scn,page in zip(scanned_pages,page_label):
-            studentName, studentSerial = "Unknown"
-            studentSerial = "Unknown"
+            studentName, studentSerial = get_id_name(scn)
             scn_num+=1
-            scn_mark_loc = markingLoc(scn,mark_templates,f"__{scn_num}={page+1}")
+            scn_mark_loc = markingLoc(scn,f"__{scn_num}={page+1}")
             #정답마킹 좌표와 답안마킹 좌표 거리계산, 15미만일시 정답 취급
             i=1 # i : 문제 번호
             for num in range(0,page):
                 i += qus_num[num]
             if len(answer_loc[page]) == len(scn_mark_loc):
+                isCorrect = False
+                point = 0
                 self.txtBrowser.append(f"File #{scn_num} \nStudent Info : \n\tName : {studentName} \n\tSerial : {studentSerial} \n\tPage : {page+1}")
                 for a,b in zip(answer_loc[page],scn_mark_loc):
-                    if distance(a, b) < 15: self.txtBrowser.append(f"{i}번: 정답 {score_arr[i-1]}점")
+                    if distance(a, b) < 15: 
+                        self.txtBrowser.append(f"{i}번: 정답 {score_arr[i-1]}점")
+                        isCorrect = True
+                        point = int(score_arr[i-1])
                     else : self.txtBrowser.append(f"{i}번: 오답")
                     i += 1
+                
+                data = pd.Series([studentName, studentSerial, page+1, i, isCorrect, point], index=columns)
+                df = df._append(data, ignore_index=True)
             else: 
                 self.txtBrowser.append(f"ERR: File #{scn_num}={page+1}p 마킹갯수가 맞지 않습니다 {len(scn_mark_loc)} of {len(answer_loc[page])}")
                 err_cnt +=1
@@ -121,13 +132,14 @@ class AutoScoring(QDialog):
                     cv2.putText(tmp,f"{pt}",pt, cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 255), 1, cv2.LINE_AA)
                     errData.loc[len(errData.index)] = [scn_num,page+1,i,str(pt).replace("(","").replace(")","")]
                     i+=1
-                
+                    
                 cv2.imwrite(f"./Err/{scn_num}.jpg",tmp)
 
             self.txtBrowser.append("=======================")
             self.progressBar.setValue(scn_num)
         #scoring loop End
         self.txtBrowser.append("First Scoring End")
+        
 
         #배점 입력 받기 및 문제 갯수 검증
         window = EcWindow()
@@ -147,6 +159,7 @@ class AutoScoring(QDialog):
         
         errChecked["이름"] = "Unknown"
         errChecked["학번"] = "Unknown"
+        
         k = 0
         for ia in errFnM["파일번호"]:
             locs = []
@@ -176,11 +189,20 @@ class AutoScoring(QDialog):
                     else : 
                         self.txtBrowser.append(f"{i}번: 오답")
                     i += 1
+            else:
+                print("err")
+            
+            
             self.txtBrowser.append("=======================")
             k+=1
             self.progressBar.setValue(k)
+            
         self.labelProgress.setText("채점완료")
         self.txtBrowser.append("Done")
+        df.to_excel('result_detail.xlsx', index=False)
+        outdf, _min, _max, _std = output(df)
+        self.txtBrowser.append(f"최저: {_min},최고: {_max}, 표준편차: {_std}")
+        outdf.to_excel('result_summary.xlsx', index=False)
         self.analyzeBtn.setEnabled(True)
         self.analyzeBtn.setStyleSheet("color: rgb(212, 212, 202);background-color: rgb(30, 30, 30);border: 2px solid rgb(212, 212, 202);")
         self.saveBtn.setEnabled(True)
@@ -188,7 +210,6 @@ class AutoScoring(QDialog):
         self.exitBtn.setEnabled(True)
         self.exitBtn.setStyleSheet("color: rgb(212, 212, 202);background-color: rgb(30, 30, 30);border: 2px solid rgb(212, 212, 202);")
 
-        
         
 
 
@@ -198,12 +219,17 @@ class Intro(QtWidgets.QMainWindow, Ui_Form):
         self.setupUi(self)
         self.setFixedSize(QSize(625, 470))
         self.initUi()
+
+        df = pd.read_csv("./pathList.csv", index_col = 0)
+        self.create_table_widget(self.pathSaveList, df)
     
     def initUi(self):
         self.setWindowTitle("AutoScore")
         self.openAnswer.clicked.connect(self.openAns)
         self.openScanned.clicked.connect(self.openScn)
         self.introNextBtn.clicked.connect(self.introNext)
+        self.saveBtn.clicked.connect(self.savePath)
+        self.loadBtn.clicked.connect(self.loadPath)
     
     def openAns(self):
         global answerDir
@@ -238,6 +264,50 @@ class Intro(QtWidgets.QMainWindow, Ui_Form):
             Window2 = AutoScoring()
             self.hide()
             Window2.runAutoScore()
+    
+    def savePath(self):
+        name = self.saveText.text()
+        if not name or not answerDir or not scannedDir:
+            return  # 이름, answerDir, scannedDir 중 하나라도 없으면 아무것도 하지 않음
+
+        existing_df = pd.read_csv("./pathList.csv")
+        new_data = pd.DataFrame({'Name': [name], 'AnswerDir': [answerDir], 'ScannedDir': [scannedDir]})
+        existing_df = pd.concat([existing_df, new_data])
+        #existing_df = existing_df.append(new_data, ignore_index=True)
+        #existing_df = existing_df[['Name', 'AnswerDir', 'ScannedDir']]
+        existing_df.to_csv("./pathList.csv", index=False)
+        self.pathSaveList.setRowCount(0)
+        updated_df = pd.read_csv("./pathList.csv", index_col = 0)
+        self.create_table_widget(self.pathSaveList, updated_df)
+
+    def loadPath(self):
+        global scannedDir, answerDir
+        selected_row = self.pathSaveList.currentRow()
+        answerDir = (self.pathSaveList.item(selected_row, 0).text())
+        scannedDir = (self.pathSaveList.item(selected_row, 1).text())
+        self.folderDirAnswer.setText(answerDir)
+        fileList = os.listdir(answerDir)
+        fileCount = len(fileList)
+        self.countAnswerPage.setText(str(fileCount) + "개의 파일을 찾았습니다.")
+        self.folderDirScanned.setText(scannedDir)
+        fileList = os.listdir(scannedDir)
+        fileCount = len(fileList)
+        self.countScannedPage.setText(str(fileCount) + "개의 파일을 찾았습니다.")
+        
+    def create_table_widget(self, widget, df):
+        widget.setRowCount(len(df.index))
+        widget.setColumnCount(len(df.columns))
+        widget.setHorizontalHeaderLabels(df.columns)
+
+        df.index = df.index.astype(str)
+
+        widget.setVerticalHeaderLabels(df.index)
+
+        for row_index, row in enumerate(df.index):
+            for col_index, column in enumerate(df.columns):
+                value = df.loc[row][column]
+                item = QTableWidgetItem(str(value))
+                widget.setItem(row_index, col_index, item)
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)

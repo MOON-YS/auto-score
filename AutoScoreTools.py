@@ -6,11 +6,36 @@ import math
 import os
 import cv2
 import numpy as np
-from matplotlib import pyplot as plt
 from google.cloud import vision
 from google.oauth2 import service_account
-import io
 import base64
+import os
+import fitz
+from docx2pdf import convert
+import torch
+model = torch.hub.load('ultralytics/yolov5', 'custom', path='./best2.pt', force_reload=True)
+
+def image_converter(path,fname):
+    #word파일에서 바로 이미지로 변환하는 라이브러리가없어서 word파일이 들어오면 pdf파일로 변환해서 이미지로 변환시켰습니다.
+    #찾아보니 word에서 바로 이미지로 변환해주는거 있긴한데 써보니까 이미지에 워터마크가 붙어버리네요..
+
+    #파일명과 확장자 구분
+    name, ext = os.path.splitext(path+"\\"+fname)
+    if ext == ".docx":
+        #word to pdf
+        convert(path+"\\"+fname)
+        path = f"{name}.pdf"
+
+    elif ext != ".pdf":
+        print("err")
+        return 1
+    
+    #pdf to img
+    doc = fitz.open(path+"\\"+fname)
+    for i, page in enumerate(doc):
+        img = page.get_pixmap(dpi=300)
+        img.save(f"{path}/converted_{i}.png") #변환된 파일 저장경로
+        print(f"{i}")
 
 # 구글 키 파일 경로 설정
 credentials_path = 'inbound-bee-234915-0490831a85a5.json'
@@ -53,39 +78,45 @@ def compare_image(image1, image2):
     return sim_ration
 
 #마킹 위치 좌표 반환 ex)[(204, 849), (210, 1684), (1157, 1725), (1552, 1237)]
-def markingLoc(testImage,mark_templates,name=None):
-    loc = [0,0]
-    testImage = cv2.blur(testImage,(3,2))
-    ret, testImage = cv2.threshold(testImage, 250, 255, cv2.THRESH_BINARY_INV)
-    counter = 0
-    for mark in mark_templates:
-        #매치 템플릿
-        result1 = cv2.matchTemplate(testImage, mark, cv2.TM_CCOEFF_NORMED)
-        #임계값 설정
-        loc_tmp = np.where(result1 >= 0.9)
-        if counter == 0:
-            loc[0] = np.concatenate((loc_tmp[0],loc_tmp[0]),0)
-            loc[1] = np.concatenate((loc_tmp[1],loc_tmp[1]),0)
-        else:
-            loc[0] = np.concatenate((loc[0],loc_tmp[0]),0)
-            loc[1] = np.concatenate((loc[1],loc_tmp[1]),0)
-        counter += 1
-    
+#마킹 위치 좌표 반환 ex)[(204, 849), (210, 1684), (1157, 1725), (1552, 1237)]
+def markingLoc(testImage,name=None):
+    #cv2.imwrite(f"./result/{name}_before.jpg",testImage)
+    # 이미지를 YOLOv5 모델에 입력으로 전달하여 객체를 탐지
+    results = model(testImage)
+
+    # 좌표를 저장할 리스트
+    detected_objects = []
+    confidence_threshold = 0.5
+    for detection in results.xyxy[0]:
+    # 객체의 confidence가 threshold 이상인 경우에만 처리합니다.
+        if detection[4].item() >= confidence_threshold:
+            label = int(detection[5])
+            bbox = detection[:4].int().cpu().numpy()
+            x, y = bbox[0], bbox[1]
+        
+            # 좌표를 리스트에 저장
+            detected_objects.append((x, y))
+
+            #사각형으로 객체를 표시
+            #cv2.rectangle(testImage, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (0, 255, 0), 2)
+
+
+    detected_objects.sort(key=lambda x:(x[1], x[0]))
     #중복 좌표 제거
     mask = np.zeros(testImage.shape[:2], np.uint8)
-    w = 50
-    h = 50
+    w = 150
+    h = 150
     locs = []
-    
-    for pt in zip(*loc[::-1]):
+    for pt in detected_objects:
         if mask[pt[1] + int(round(h/2)), pt[0] + int(round(w/2))] != 255:
             mask[pt[1]:pt[1]+h, pt[0]:pt[0]+w] = 255
             locs.append(pt)
-
-    #매칭된 좌표값에 사각형 그리기 및 겹치는 좌표 제거하여 결과 저장
-    locs.sort(key=lambda x:(x[1], x[0]))
-    
+        
+    #좌표를 출력
+    #print(detected_objects)
+    #cv2.imwrite(f"./result/ai_{name}.jpg",testImage)
     #좌표값 정렬 x오름 이후 y오름
+    #print(len(detected_objects))
     return locs
 
 def loadFiles(answer_path,scanned_path):
@@ -94,6 +125,14 @@ def loadFiles(answer_path,scanned_path):
         answer_path (str): 정답 폴더 경로,
         scanned_path (str): 스캔된 시험지 폴더 경로
     """
+    
+    for f in os.listdir(answer_path):
+        if 'pdf' in f or 'docx' in f:
+            image_converter(answer_path,f)
+    
+    for f in os.listdir(scanned_path):
+        if 'pdf' in f or 'docx' in f:
+            image_converter(scanned_path,f)
     #load test files
     mark_template_path = './DataSet/mark_template'
 
@@ -127,87 +166,45 @@ def loadFiles(answer_path,scanned_path):
 
     return scanned_pages,answer_pages,mark_templates
 
-def get_id_name(scanned_png, templateMatching_png):
-    # templateMatching_png의 여러 위치 찾기
-    # 템플릿 매칭을 수행합니다.
-    result = cv2.matchTemplate(scanned_png, templateMatching_png, cv2.TM_CCOEFF_NORMED)
-    # 매칭 결과에서 임계값 이상인 위치 찾기.
-    locations = np.where(result >= 0.8)
-    occurrences = []
-    for loc in zip(*locations[::-1]):
-        occurrences.append(loc)
-        
-    w, h = templateMatching_png.shape[::-1]
-    y1 = 0
-    Number_y2 = 0
-    x1 = 0
-    Number_x2 = 0
-    # 이름/학번 영역
-    for pt in occurrences:
-        x1, y1 = pt
-        x2, y2 = (x1 + w, y1 + h)
-    # 이름 영역
-        Name_x1 = x1 + 143
-        Name_y1 = y1
-
-        Name_x2 = x2 + 280
-        Name_y2 = y2 
-    #학번 영역
-        Number_x1 = x1 + 143
-        Number_y1 = y1 + 70
-
-        Number_x2 = x2 + 280
-        Number_y2 = y2 + 70
+def get_id_name(scanned_png):
+    #scanned_png = cv2.resize(scanned_png, dsize=(X_SIZE, int(scanned_png.shape[0] * (X_SIZE/scanned_png.shape[1]))), interpolation=cv2.INTER_AREA)
+    #cv2.imshow(":",scanned_png)
+    #cv2.setMouseCallback(':', onMouse)
+    scanned_png = scanned_png[457:551,215:1952]
+    _, encoded_image = cv2.imencode('.png', scanned_png)
     
-    Name_png = scanned_png[Name_y1:Name_y2, Name_x1:Name_x2]
-    ret, Name_png = cv2.threshold(Name_png, 127, 255, cv2.THRESH_BINARY_INV)
-    #cv2.imshow('Name_png', Name_png)
-
-    Number_png = scanned_png[Number_y1:Number_y2, Number_x1:Number_x2]
-    ret, Number_png = cv2.threshold(Number_png, 127, 255, cv2.THRESH_BINARY_INV)
-    #cv2.imshow('Number_png', Number_png)
-
-    test_png = scanned_png[y1:Number_y2, x1:Number_x2]
-    ret, test_png = cv2.threshold(test_png, 127, 255, cv2.THRESH_BINARY_INV)
-    #cv2.imshow('test_png', test_png)
-
-    # api로 보낼 이미지 리스트
-    cropped_images = []
-
-    cropped_images.append(Name_png)
-    cropped_images.append(Number_png)
-    # cropped_images.append(test_png)
-
-    name = ''
-    serial = ''
-    ii = 0
-    for cropped_image in cropped_images :
-        # crop된 이미지를 인코딩 및 변환
-        cv2.imwrite(f"./build/{ii}.jpg",cropped_image)
-        ii = ii + 1
-        _, encoded_image = cv2.imencode('.png', cropped_image)
-        image_content = base64.b64encode(encoded_image.tobytes()).decode('utf-8')
-
-    # Vision API에 이미지 전송하여 텍스트 추출
-        image = vision.Image(content=image_content)
-        response = client.document_text_detection(image=image, image_context={"language_hints": ["ko"]})
-        if ii == 1:
-            name = response.full_text_annotation.text
-        elif ii == 2:
-            serial = response.full_text_annotation.text
-        
-        # for page in response.full_text_annotation.pages:
-        #     for block in page.blocks:
-        #         for paragraph in block.paragraphs:
-        #             for word in paragraph.words:
-        #                 word_text = ''.join([
-        #                     symbol.text for symbol in word.symbols
-        #                 ])
-        #                 print('단어: {} (신뢰도: {})'.format(word_text, word.confidence))
-
-        #                 for symbol in word.symbols:
-        #                     if(symbol.confidence < 0.8):
-        #                         print('\t{} (신뢰도: {})'.format(symbol.text, symbol.confidence))
-        #return response.full_text_annotation.text
-
+    scanned_png = base64.b64encode(encoded_image.tobytes()).decode('utf-8')
+    image = vision.Image(content=scanned_png)
+    
+    response = client.document_text_detection(image=image, image_context={"language_hints": ["ko"]})
+    text = response.full_text_annotation.text
+    print(text)
+    x = text.replace(" ","")
+    x = x.replace("이름:","")  
+    x = x.replace("학번:","")
+    arr = x.split("\n")
+    arr = [v for v in arr if v]
+    
+    if len(arr) == 2:
+        name = arr[0]
+        serial = arr[1]
+    else:
+        name = "Unknown"
+        serial = "Unknown"
     return name, serial
+
+testpath = "./TestFile/Scanned/converted_1.png"
+img_array = np.fromfile(testpath, np.uint8)
+temp = cv2.imdecode(img_array,cv2.IMREAD_GRAYSCALE)
+def onMouse(event, x, y, flags, param) :
+    if event == cv2.EVENT_LBUTTONDOWN :
+        print('왼쪽 마우스 클릭 했을 때 좌표 : ', x, y)
+name, serial = get_id_name(temp)
+
+def output(df) : 
+    output_df = df.groupby(['Serial', 'Name'])['Point'].sum().to_frame().reset_index()
+    output_df.columns = ['학번', '이름', '총점']
+    print(output_df)
+    return output_df, output_df['총점'].min(), output_df['총점'].max(), round(output_df['총점'].std(), 4)
+    
+cv2.waitKey(0)

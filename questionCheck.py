@@ -220,6 +220,7 @@ class QcWindow(QtWidgets.QWidget):
             self.qList.setItem(crnt,i,QtWidgets.QTableWidgetItem(str(upper)))
         self.qList.setCurrentCell(crnt+1, crntc)
         return
+
 #testing code
 if __name__ == '__main__':
     import sys
