@@ -97,7 +97,7 @@ class AutoScoring(QDialog):
         err_cnt = 0
         errData = pd.DataFrame(columns=['파일번호','페이지','문제번호','답안좌표'])
         errFnM = pd.DataFrame(columns=['파일번호','이름','학번'])
-        columns = ['Name', 'Serial', 'Page', 'Question_Num', 'isCorrect', 'Point']
+        columns = ['Name', 'Serial', 'Page', 'Question_Num', 'isCorrect', 'Point', 'Err']
         df = pd.DataFrame([], columns=columns)
         for scn,page in zip(scanned_pages,page_label):
             studentName, studentSerial = get_id_name(scn)
@@ -118,9 +118,13 @@ class AutoScoring(QDialog):
                         point = int(score_arr[i-1])
                     else : self.txtBrowser.append(f"{i}번: 오답")
                     i += 1
+                    errMsg = ""
+                    if studentName == "Unknown" or studentSerial == "Unknown":
+                        errMsg = f"이름 및 학번 인식에 실패했습니다. File #{scn_num}"
+                    data = pd.Series([studentName, studentSerial, page+1, i, isCorrect, point, errMsg], index=columns)
+                    df = df._append(data, ignore_index=True)
                 
-                data = pd.Series([studentName, studentSerial, page+1, i, isCorrect, point], index=columns)
-                df = df._append(data, ignore_index=True)
+                
             else: 
                 self.txtBrowser.append(f"ERR: File #{scn_num}={page+1}p 마킹갯수가 맞지 않습니다 {len(scn_mark_loc)} of {len(answer_loc[page])}")
                 err_cnt +=1
@@ -184,13 +188,24 @@ class AutoScoring(QDialog):
             if len(answer_loc[page]) == len(locs):
                 self.txtBrowser.append(f"File #{ia} \nStudent Info : \n\tName : {name} \n\tSerial : {serial} \n\tPage : {page+1}")
                 for a,b in zip(answer_loc[page],locs):
+                    isCorrect = False
+                    point = 0
                     if distance(a, b) < 15: 
                         self.txtBrowser.append(f"{i}번: 정답 {score_arr[i-1]}점")
+                        point = int(score_arr[i-1])
+                        isCorrect = True
                     else : 
                         self.txtBrowser.append(f"{i}번: 오답")
                     i += 1
+                    errMsg = ""
+                    if name == "Unknown":
+                        errMsg = f"이름인식에 실패했습니다. File #{ia}"
+                    data = pd.Series([name, serial, page+1, i, isCorrect, point,errMsg], index=columns)
+                    df = df._append(data, ignore_index=True)
             else:
                 print("err")
+                data = pd.Series([name, serial, -1, -1, isCorrect, 0,f"문제수가 맞지않습니다.File #{ia}"], index=columns)
+                df = df._append(data, ignore_index=True)
             
             
             self.txtBrowser.append("=======================")
