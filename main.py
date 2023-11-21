@@ -215,17 +215,9 @@ class AutoScoring(QDialog):
         self.labelProgress.setText("채점완료")
         self.txtBrowser.append("Done")
         df.to_excel('result_detail.xlsx', index=False)
-        outdf, _min, _max, _std = output(df)
-        self.txtBrowser.append(f"최저: {_min},최고: {_max}, 표준편차: {_std}")
+        outdf, _avg, _min, _max, _std = output(df)
+        self.txtBrowser.append(f"평균: {_avg}, 최저: {_min},최고: {_max}, 표준편차: {_std}")
         outdf.to_excel('result_summary.xlsx', index=False)
-        self.analyzeBtn.setEnabled(True)
-        self.analyzeBtn.setStyleSheet("color: rgb(212, 212, 202);background-color: rgb(30, 30, 30);border: 2px solid rgb(212, 212, 202);")
-        self.saveBtn.setEnabled(True)
-        self.saveBtn.setStyleSheet("color: rgb(212, 212, 202);background-color: rgb(30, 30, 30);border: 2px solid rgb(212, 212, 202);")
-        self.exitBtn.setEnabled(True)
-        self.exitBtn.setStyleSheet("color: rgb(212, 212, 202);background-color: rgb(30, 30, 30);border: 2px solid rgb(212, 212, 202);")
-
-        
 
 
 class Intro(QtWidgets.QMainWindow, Ui_Form):

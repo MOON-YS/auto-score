@@ -205,6 +205,6 @@ def output(df) :
     output_df = df.groupby(['Serial', 'Name'])['Point'].sum().to_frame().reset_index()
     output_df.columns = ['학번', '이름', '총점']
     print(output_df)
-    return output_df, output_df['총점'].min(), output_df['총점'].max(), round(output_df['총점'].std(), 4)
+    return output_df, output_df['총점'].mean(),output_df['총점'].min(), output_df['총점'].max(), round(output_df['총점'].std(), 4)
 
 cv2.waitKey(0)

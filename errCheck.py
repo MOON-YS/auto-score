@@ -175,6 +175,8 @@ class EcWindow(QtWidgets.QWidget):
         if crnt == 0 : return
         ccol = self.qList.columnCount()
         for i in range(0,ccol):
+            if self.qList.item(crnt, i).text() == None:
+                return
             lower = self.qList.item(crnt, i).text()
             upper = self.qList.item(crnt-1, i).text()
             self.qList.setItem(crnt-1,i,QtWidgets.QTableWidgetItem(str(lower)))
@@ -188,6 +190,8 @@ class EcWindow(QtWidgets.QWidget):
         if crnt == self.qList.rowCount() : return
         ccol = self.qList.columnCount()
         for i in range(0,ccol):
+            if self.qList.item(crnt, i).text() == None:
+                return
             lower = self.qList.item(crnt, i).text()
             upper = self.qList.item(crnt+1, i).text()
             self.qList.setItem(crnt+1,i,QtWidgets.QTableWidgetItem(str(lower)))

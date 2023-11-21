@@ -1,6 +1,2 @@
 Name,AnswerDir,ScannedDir
-Example1,C:/Research/capstone2023/AnswerPage,C:/Research/capstone2023/DataSet
-Example2,C:/Research/capstone2023/__pycache__,C:/Research/capstone2023/DataSet
-Example3,C:/Research/capstone2023/DataSet,C:/Research/capstone2023/DataSet
-test,C:/Research/capstone2023/DataSet,C:/Research/capstone2023/DataSet
 TEST1,E:/Downlaods/auto-score/TestFile/Answer,E:/Downlaods/auto-score/TestFile/Scanned
